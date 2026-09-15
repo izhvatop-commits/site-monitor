@@ -1,1 +1,14 @@
-{}
+{
+  "ACTE": {
+    "down_since": "2026-09-15T13:00:36.308591+00:00",
+    "notified_down": true,
+    "ssl_warned": false,
+    "status": "DOWN"
+  },
+  "Pantis": {
+    "down_since": "2026-09-15T13:01:11.242081+00:00",
+    "notified_down": true,
+    "ssl_warned": false,
+    "status": "DOWN"
+  }
+}
