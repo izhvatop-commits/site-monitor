@@ -125,8 +125,13 @@ def _trim_history(max_rows):
 # Telegram
 # =================================================================
 
-def send_telegram(text):
-    """Отправляет сообщение в Telegram. Если секреты не заданы — просто печатает в лог."""
+def send_telegram(text, thread_id=None):
+    """
+    Отправляет сообщение в Telegram. Если секреты не заданы — просто печатает в лог.
+    thread_id — id конкретной темы (Topic) внутри группы, если в группе включены темы
+    и нужно писать в конкретную тему, а не в "Общую". Берётся из config.yaml
+    (telegram_message_thread_id).
+    """
     if not TELEGRAM_BOT_TOKEN or not TELEGRAM_CHAT_ID:
         print("ВНИМАНИЕ: TELEGRAM_BOT_TOKEN или TELEGRAM_CHAT_ID не заданы. "
               "Сообщение не отправлено, вывожу его здесь:")
@@ -134,8 +139,11 @@ def send_telegram(text):
         return
 
     url = f"https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}/sendMessage"
+    data = {"chat_id": TELEGRAM_CHAT_ID, "text": text}
+    if thread_id:
+        data["message_thread_id"] = thread_id
     try:
-        resp = requests.post(url, data={"chat_id": TELEGRAM_CHAT_ID, "text": text}, timeout=15)
+        resp = requests.post(url, data=data, timeout=15)
         if resp.status_code != 200:
             print(f"Ошибка отправки в Telegram: HTTP {resp.status_code} {resp.text}")
     except requests.RequestException as e:
@@ -334,6 +342,7 @@ def main():
     cfg = load_config()
     state = load_state()
     history_rows = []
+    thread_id = cfg.get("telegram_message_thread_id")
 
     for site in cfg["sites"]:
         name = site["name"]
@@ -355,7 +364,7 @@ def main():
             # Сайт отвечает нормально
             if site_state["status"] == "DOWN" and site_state["notified_down"]:
                 # Было подтверждённое падение - шлём отдельное сообщение о восстановлении
-                send_telegram(build_up_message(site, result, site_state["down_since"], cfg))
+                send_telegram(build_up_message(site, result, site_state["down_since"], cfg), thread_id)
             site_state["status"] = "UP"
             site_state["down_since"] = None
             site_state["notified_down"] = False
@@ -364,7 +373,7 @@ def main():
             if site_state["status"] != "DOWN":
                 site_state["down_since"] = datetime.now(timezone.utc).isoformat()
             if not site_state["notified_down"]:
-                send_telegram(build_down_message(site, result, attempts, cfg))
+                send_telegram(build_down_message(site, result, attempts, cfg), thread_id)
                 site_state["notified_down"] = True
             # если notified_down уже True - значит, уведомление уже уходило
             # для этого инцидента, повторно не спамим
@@ -380,7 +389,8 @@ def main():
                     if not site_state["ssl_warned"]:
                         send_telegram(
                             f"⚠️ {name}: SSL-сертификат истекает через {days_left} дн.\n"
-                            f"URL: {url}"
+                            f"URL: {url}",
+                            thread_id,
                         )
                         site_state["ssl_warned"] = True
                 else:
