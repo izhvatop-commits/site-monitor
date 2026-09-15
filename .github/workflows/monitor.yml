@@ -1,0 +1,58 @@
+# Мониторинг доступности сайтов.
+# Запускается автоматически каждые 5 минут, а также вручную (workflow_dispatch)
+# для ручной проверки/тестов.
+
+name: Site monitor
+
+on:
+  schedule:
+    # ВНИМАНИЕ: GitHub не гарантирует запуск ровно по расписанию -
+    # при высокой нагрузке на платформу возможны задержки в несколько минут.
+    - cron: "*/5 * * * *"
+  workflow_dispatch: {}   # позволяет запустить проверку вручную из вкладки Actions
+
+# Нужны права на запись, чтобы workflow мог закоммитить обновлённые
+# state.json (состояние UP/DOWN) и history.csv (история проверок) обратно в репозиторий.
+permissions:
+  contents: write
+
+# Не даём двум запускам работать одновременно (например, если предыдущий
+# запуск подзадержался из-за повторных проверок) - иначе возможна гонка
+# при коммите state.json. Следующий запуск просто подождёт своей очереди.
+concurrency:
+  group: site-monitor
+  cancel-in-progress: false
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Run monitoring check
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+        run: python monitor.py
+
+      - name: Commit and push state/history if changed
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add state.json history.csv
+          if git diff --cached --quiet; then
+            echo "Нет изменений для коммита"
+          else
+            git commit -m "monitor: обновление состояния [skip ci]"
+            git pull --rebase --autostash
+            git push
+          fi
