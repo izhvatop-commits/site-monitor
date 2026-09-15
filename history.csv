@@ -9,3 +9,5 @@ datetime,site,status,http_code,response_time_sec,error_type
 2026-09-15 18:18:05,Pantis,UP,200,1.72,
 2026-09-15 18:25:32,ACTE,DOWN,200,1.02,content_missing
 2026-09-15 18:25:34,Pantis,UP,200,1.64,
+2026-09-15 18:34:29,ACTE,UP,200,0.96,
+2026-09-15 18:34:33,Pantis,UP,200,1.83,
