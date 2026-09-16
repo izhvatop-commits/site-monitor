@@ -1,9 +1,9 @@
 {
   "ACTE": {
-    "down_since": "2026-09-16T00:51:28.387720+00:00",
-    "notified_down": true,
+    "down_since": null,
+    "notified_down": false,
     "ssl_warned": false,
-    "status": "DOWN"
+    "status": "UP"
   },
   "Pantis": {
     "down_since": null,
