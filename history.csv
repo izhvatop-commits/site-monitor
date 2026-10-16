@@ -363,3 +363,5 @@ datetime,site,status,http_code,response_time_sec,error_type
 2026-10-16 12:33:21,Pantis,UP,200,1.45,
 2026-10-16 17:09:46,ACTE,UP,200,0.8,
 2026-10-16 17:09:48,Pantis,UP,200,0.99,
+2026-10-16 20:59:04,ACTE,UP,200,0.91,
+2026-10-16 20:59:06,Pantis,UP,200,1.23,
